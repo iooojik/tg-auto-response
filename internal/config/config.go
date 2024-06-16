@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"auto-hello/internal/bot"
 	"gopkg.in/yaml.v3"
+
+	"github.com/iooojik/tg-auto-hello/internal/bot"
 )
 
 type Config struct {

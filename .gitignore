@@ -7,6 +7,7 @@
 configs/config.json
 configs/config.yml
 api.yaml
+config.yaml
 # AWS User-specific
 dev
 mysql.log

@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"auto-hello/internal/bot"
-	"auto-hello/internal/config"
+	"github.com/iooojik/tg-auto-hello/internal/bot"
+	"github.com/iooojik/tg-auto-hello/internal/config"
 )
 
 func main() {

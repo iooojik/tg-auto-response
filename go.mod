@@ -1,4 +1,4 @@
-module auto-hello
+module github.com/iooojik/tg-auto-hello
 
 go 1.22
 
