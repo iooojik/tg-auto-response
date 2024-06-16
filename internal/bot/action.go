@@ -20,7 +20,7 @@ func actionCheckHello(
 		return nil, nil
 	}
 
-	content := strings.ToLower(strings.TrimSpace(message.Text))
+	content := ExtractTextAndSpaces(strings.ToLower(strings.TrimSpace(message.Text)))
 
 	for _, hello := range cfg.IncomeMessages {
 		if !strings.EqualFold(strings.ToLower(hello), content) {
