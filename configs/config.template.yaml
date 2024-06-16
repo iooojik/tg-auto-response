@@ -1,0 +1,9 @@
+bot:
+  token: ""
+  debug: true
+  auto_hello:
+    reply: "Привет 👋"
+    income_messages:
+      - привет
+      - hello
+      - hi
