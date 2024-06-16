@@ -6,5 +6,5 @@ services:
       dockerfile: Dockerfile
     volumes:
       - "./configs/config.yaml:/app/configs/config.yaml"
-    restart: no
+    restart: on-failure
     command: autohello
