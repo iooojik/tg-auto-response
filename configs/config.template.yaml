@@ -7,3 +7,5 @@ bot:
       - привет
       - hello
       - hi
+  ignore_messages_from:
+    - 1111

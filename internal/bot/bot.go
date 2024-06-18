@@ -105,6 +105,10 @@ func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
 			}
 
 			for _, update := range updates {
+				if b.isIgnore(update.Message.From.ID) {
+					continue
+				}
+
 				if update.UpdateID >= config.Offset {
 					config.Offset = update.UpdateID + 1
 					ch <- update
@@ -114,6 +118,16 @@ func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
 	}()
 
 	return ch
+}
+
+func (b *Bot) isIgnore(userID int64) bool {
+	for _, v := range b.cfg.IgnoreMessagesFrom {
+		if v == userID {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (b *Bot) GetUpdates(config tgbotapi.UpdateConfig) ([]Update, error) {
@@ -131,7 +145,9 @@ func (b *Bot) GetUpdates(config tgbotapi.UpdateConfig) ([]Update, error) {
 func (b *Bot) handleBusinessMessage(
 	message *BusinessMessage,
 ) (*BusinessMessageConfig, error) {
-	slog.Info("msg", "chat ID", message.From.ID, "username", message.From.UserName, "msg", message.Text)
+	if b.cfg.Debug {
+		slog.Info("msg", "chat ID", message.From.ID, "username", message.From.UserName, "msg", message.Text)
+	}
 
 	msg, err := actionCheckHello(message, b.cfg.AutoHello)
 	if err != nil {

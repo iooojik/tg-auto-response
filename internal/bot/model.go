@@ -8,9 +8,10 @@ type AutoHello struct {
 }
 
 type Config struct {
-	Token     string     `yaml:"token"`
-	Debug     bool       `yaml:"debug"`
-	AutoHello *AutoHello `yaml:"auto_hello"`
+	Token              string     `yaml:"token"`
+	Debug              bool       `yaml:"debug"`
+	AutoHello          *AutoHello `yaml:"auto_hello"`
+	IgnoreMessagesFrom []int64    `yaml:"ignore_messages_from"`
 }
 
 type BusinessMessage struct {
