@@ -52,6 +52,10 @@ func (b *Bot) Run() error {
 			err error
 		)
 
+		if b.isIgnore(update.Message.From.ID) {
+			continue
+		}
+
 		if update.BusinessMessage != nil {
 			msg, err = b.handleBusinessMessage(update.BusinessMessage)
 		} else {
@@ -105,10 +109,6 @@ func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
 			}
 
 			for _, update := range updates {
-				if b.isIgnore(update.Message.From.ID) {
-					continue
-				}
-
 				if update.UpdateID >= config.Offset {
 					config.Offset = update.UpdateID + 1
 					ch <- update
