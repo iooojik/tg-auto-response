@@ -52,11 +52,11 @@ func (b *Bot) Run() error {
 			err error
 		)
 
-		if b.isIgnore(update.Message.From.ID) {
-			continue
-		}
-
 		if update.BusinessMessage != nil {
+			if b.isIgnore(update.BusinessMessage.From.ID) {
+				continue
+			}
+
 			msg, err = b.handleBusinessMessage(update.BusinessMessage)
 		} else {
 			continue
