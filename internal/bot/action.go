@@ -34,6 +34,7 @@ func actionCheckHello(
 			},
 			MessageConfig: tgbotapi.MessageConfig{
 				Text:                  cfg.Reply,
+				ParseMode:             "MarkdownV2",
 				DisableWebPagePreview: true,
 			},
 			BusinessConnectionID: message.BusinessConnectionID,
