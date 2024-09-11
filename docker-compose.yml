@@ -1,10 +1,10 @@
 services:
-  autohello_bot:
-    image: autohello
+  bot:
+    image: bot
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - "./configs/config.yaml:/app/configs/config.yaml"
-    restart: on-failure
-    command: autohello
+    restart: always
+    command: bot

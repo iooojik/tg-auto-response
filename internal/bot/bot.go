@@ -18,7 +18,7 @@ type Bot struct {
 	botAPI          *tgbotapi.BotAPI
 }
 
-func NewBot(
+func New(
 	cfg *Config,
 ) *Bot {
 	b := &Bot{
@@ -146,13 +146,19 @@ func (b *Bot) handleBusinessMessage(
 	message *BusinessMessage,
 ) (*BusinessMessageConfig, error) {
 	if b.cfg.Debug {
-		slog.Info("msg", "chat ID", message.From.ID, "username", message.From.UserName, "msg", message.Text)
+		slog.Info("msg", "chat_ID", message.From.ID, "username", message.From.UserName, "msg", message.Text)
 	}
 
-	msg, err := actionCheckHello(message, b.cfg.AutoHello)
-	if err != nil {
-		slog.Error("action", "err", err.Error())
+	for _, handleCfg := range b.cfg.Handle {
+		msg, err := CheckMessage(message, handleCfg)
+		if err != nil {
+			slog.Error("action", "err", err.Error())
+		}
+
+		if msg != nil {
+			return msg, nil
+		}
 	}
 
-	return msg, nil
+	return nil, nil
 }

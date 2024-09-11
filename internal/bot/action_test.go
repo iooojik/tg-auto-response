@@ -2,7 +2,7 @@ package bot
 
 import "testing"
 
-func TestExtractTextAndSpaces(t *testing.T) {
+func Test_sanitizeMessageText(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -35,8 +35,8 @@ func TestExtractTextAndSpaces(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ExtractTextAndSpaces(tt.args.s); got != tt.want {
-				t.Errorf("ExtractTextAndSpaces() = %v, want %v", got, tt.want)
+			if got := sanitizeMessageText(tt.args.s); got != tt.want {
+				t.Errorf("sanitizeMessageText() = %v, want %v", got, tt.want)
 			}
 		})
 	}

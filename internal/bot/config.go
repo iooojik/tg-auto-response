@@ -15,30 +15,28 @@ type BusinessMessageConfig struct {
 func (config BusinessMessageConfig) params() (tgbotapi.Params, error) {
 	params := make(tgbotapi.Params)
 
-	err := params.AddFirstValid("chat_id", config.BaseChat.ChatID, config.BaseChat.ChannelUsername)
+	err := addFirstValidParam(params, "chat_id", config.BaseChat.ChatID, config.BaseChat.ChannelUsername)
 	if err != nil {
-		return nil, fmt.Errorf("addFirstValid: %w", err)
+		return nil, err
 	}
 
 	params.AddNonZero("reply_to_message_id", config.BaseChat.ReplyToMessageID)
-
 	params.AddBool("disable_notification", config.BaseChat.DisableNotification)
 	params.AddBool("allow_sending_without_reply", config.BaseChat.AllowSendingWithoutReply)
 
-	err = params.AddInterface("reply_markup", config.BaseChat.ReplyMarkup)
+	err = addInterfaceParam(params, "reply_markup", config.BaseChat.ReplyMarkup)
 	if err != nil {
-		return nil, fmt.Errorf("add reply markup: %w", err)
+		return nil, err
 	}
 
 	params.AddNonEmpty("business_connection_id", config.BusinessConnectionID)
-
 	params.AddNonEmpty("text", config.Text)
 	params.AddBool("disable_web_page_preview", config.DisableWebPagePreview)
 	params.AddNonEmpty("parse_mode", config.ParseMode)
 
-	err = params.AddInterface("entities", config.Entities)
+	err = addInterfaceParam(params, "entities", config.Entities)
 	if err != nil {
-		return nil, fmt.Errorf("add entities: %w", err)
+		return nil, err
 	}
 
 	return params, nil
@@ -46,4 +44,23 @@ func (config BusinessMessageConfig) params() (tgbotapi.Params, error) {
 
 func (config BusinessMessageConfig) method() string {
 	return "sendMessage"
+}
+
+// Helper functions to simplify repetitive parameter addition and error handling
+func addFirstValidParam(params tgbotapi.Params, key string, values ...interface{}) error {
+	err := params.AddFirstValid(key, values...)
+	if err != nil {
+		return fmt.Errorf("failed to add parameter %s: %w", key, err)
+	}
+
+	return nil
+}
+
+func addInterfaceParam(params tgbotapi.Params, key string, value interface{}) error {
+	err := params.AddInterface(key, value)
+	if err != nil {
+		return fmt.Errorf("failed to add interface parameter %s: %w", key, err)
+	}
+
+	return nil
 }

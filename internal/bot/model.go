@@ -2,16 +2,16 @@ package bot
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-type AutoHello struct {
+type HandleCfg struct {
 	IncomeMessages []string `yaml:"income_messages"`
 	Reply          string   `yaml:"reply"`
 }
 
 type Config struct {
-	Token              string     `yaml:"token"`
-	Debug              bool       `yaml:"debug"`
-	AutoHello          *AutoHello `yaml:"auto_hello"`
-	IgnoreMessagesFrom []int64    `yaml:"ignore_messages_from"`
+	Token              string      `yaml:"token"`
+	Debug              bool        `yaml:"debug"`
+	Handle             []HandleCfg `yaml:"handle"`
+	IgnoreMessagesFrom []int64     `yaml:"ignore_messages_from"`
 }
 
 type BusinessMessage struct {

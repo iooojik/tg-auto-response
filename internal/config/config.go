@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -14,17 +15,19 @@ type Config struct {
 }
 
 func ReadCfg(p string) (*Config, error) {
-	content, err := os.ReadFile(p)
+	log.Printf("Reading configuration file: %s\n", p)
+	f, err := os.OpenFile(p, os.O_RDONLY, 0600)
 	if err != nil {
-		return nil, fmt.Errorf("read config from %s: %w", p, err)
+		return nil, fmt.Errorf("failed to open config file %s: %w", p, err)
 	}
 
-	cfg := &Config{}
+	cfg := new(Config)
 
-	err = yaml.Unmarshal(content, cfg)
+	err = yaml.NewDecoder(f).Decode(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal config %s: %w", p, err)
+		return nil, fmt.Errorf("failed to unmarshal config %s: %w", p, err)
 	}
 
+	log.Println("Configuration file loaded successfully.")
 	return cfg, nil
 }

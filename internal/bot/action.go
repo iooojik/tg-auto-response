@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 	"unicode"
@@ -12,22 +13,22 @@ var (
 	spaceRegexp = regexp.MustCompile(`\s{2,}`)
 )
 
-func actionCheckHello(
+func CheckMessage(
 	message *BusinessMessage,
-	cfg *AutoHello,
+	cfg HandleCfg,
 ) (*BusinessMessageConfig, error) {
-	if cfg == nil {
-		return nil, nil
+	if len(cfg.IncomeMessages) == 0 || cfg.Reply == "" {
+		return nil, errors.New("configuration is nil")
 	}
 
-	content := ExtractTextAndSpaces(strings.ToLower(strings.TrimSpace(message.Text)))
+	content := sanitizeMessageText(message.Text)
 
 	for _, hello := range cfg.IncomeMessages {
-		if !strings.EqualFold(strings.ToLower(hello), content) {
+		if !strings.EqualFold(hello, content) {
 			continue
 		}
 
-		msg := BusinessMessageConfig{
+		msg := &BusinessMessageConfig{
 			BaseChat: tgbotapi.BaseChat{
 				ChatID:           message.Chat.ID,
 				ReplyToMessageID: 0,
@@ -40,22 +41,22 @@ func actionCheckHello(
 			BusinessConnectionID: message.BusinessConnectionID,
 		}
 
-		return &msg, nil
+		return msg, nil
 	}
 
 	return nil, nil
 }
 
-func ExtractTextAndSpaces(s string) string {
-	var builder strings.Builder
+func sanitizeMessageText(s string) string {
+	var result []rune
+
 	for _, char := range s {
 		if unicode.IsLetter(char) || unicode.IsSpace(char) {
-			builder.WriteRune(char)
+			result = append(result, char)
 		}
 	}
 
-	s = strings.Trim(builder.String(), "\n\t\r ")
-
+	s = strings.TrimSpace(string(result))
 	s = spaceRegexp.ReplaceAllString(s, " ")
 
 	return s
