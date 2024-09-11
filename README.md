@@ -40,18 +40,29 @@ messages specified in the configuration file, the bot will send the predefined g
 
 ### Example
 
-If your `config.json` contains:
+If your `config.yaml` contains:
 
 ```yaml
 bot:
   token: ""
-  debug: false
-  auto_hello:
-  reply: "Привет 👋"
-  income_messages:
-    - привет
-    - hello
-    - hi
+  debug: true
+  handle:
+    - reply: "Привет 👋 \n\\-\\-\n _отправлено через бота @super\\_puper\\_stas\\_bot_"
+      income_messages:
+        - привет
+        - hello
+        - здарова
+        - добрый день
+        - добрый вечер
+        - хай
+        - прив
+        - алло
+        - приветствую
+        - hi
+        - хаю хай
+        - здравия желаю
+  ignore_messages_from:
+    - 11
 ```
 
 When a user sends a message saying "hello", the bot will respond with "Привет 👋".
