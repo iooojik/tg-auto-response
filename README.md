@@ -1,14 +1,14 @@
-# Telegram Greeting (auto-hello) Bot
+# Telegram Autoresponse Bot
 
-This bot is designed to automatically send a greeting message whenever
+This bot is designed to automatically send a message whenever
 a user's message matches predefined messages from a configuration file. Note that this bot is available exclusively for
 Telegram Premium users.
 
 ## Features
 
-- **Automated Greetings:** Sends a greeting message when a user's message matches the predefined messages in the
+- **Automated Messages:** Sends a message when a user's message matches the predefined messages in the
   configuration.
-- **Configuration-Based:** Easily customizable greetings and trigger messages through a configuration file.
+- **Configuration-Based:** Easily customizable messages and trigger messages through a configuration file.
 - **Premium Only:** Ensures that the bot interacts only with Telegram Premium users.
 
 ## Getting Started
@@ -36,7 +36,7 @@ docker compose build && docker compose up -d
 ## Usage
 
 Once the bot is running, it will automatically monitor messages from users. If a message matches any of the trigger
-messages specified in the configuration file, the bot will send the predefined greeting message.
+messages specified in the configuration file, the bot will send the predefined message.
 
 ### Example
 
@@ -46,8 +46,8 @@ If your `config.yaml` contains:
 bot:
   token: ""
   debug: true
-  handle:
-    - reply: "Привет 👋 \n\\-\\-\n _отправлено через бота @super\\_puper\\_stas\\_bot_"
+  conditions:
+    - reply: "Привет 👋"
       income_messages:
         - привет
         - hello

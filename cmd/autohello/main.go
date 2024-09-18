@@ -30,6 +30,7 @@ func runBot(cfg string) error {
 	defer stop()
 
 	logger.Info("config", "loading from", cfg)
+
 	conf, err := config.ReadCfg(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to read configuration: %w", err)
