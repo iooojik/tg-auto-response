@@ -32,6 +32,7 @@ func CheckMessage(
 			continue
 		}
 
+		//nolint:exhaustruct
 		msg := &model.BusinessMessageConfig{
 			BaseChat: tgbotapi.BaseChat{
 				ChatID:           message.Chat.ID,
@@ -48,6 +49,7 @@ func CheckMessage(
 		return msg, nil
 	}
 
+	//nolint:nilnil
 	return nil, nil
 }
 

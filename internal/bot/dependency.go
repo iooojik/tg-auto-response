@@ -20,7 +20,7 @@ type (
 		MakeRequest(endpoint string, params tgbotapi.Params) (*tgbotapi.APIResponse, error)
 	}
 
-	BotAPI interface {
+	TelegramAPI interface {
 		TelegramFetcher
 		TelegramBotFetcher
 	}

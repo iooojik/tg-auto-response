@@ -1,3 +1,4 @@
+//nolint:exhaustruct
 package handler
 
 import (

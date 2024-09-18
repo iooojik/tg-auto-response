@@ -1,9 +1,9 @@
-FROM golang:1.23-alpine as build
+FROM golang:1.23-alpine AS build
 
 COPY . .
 
 RUN go mod download && go test ./...
-RUN go build -o /app/bot /app/cmd/autohello/main.go
+RUN go build -o /app/bot cmd/autoresponse/main.go
 
 FROM golang:1.23-alpine
 

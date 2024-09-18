@@ -15,6 +15,8 @@ import (
 const (
 	ReceiveMessagesTimeout = 5
 
+	WaitAfterErr = time.Second * 3
+
 	UpdateBuffSize = 1
 )
 
@@ -26,7 +28,7 @@ type Bot struct {
 	// chat id - command
 	chatContext     map[int64]string
 	shutdownChannel chan any
-	botAPI          BotAPI
+	botAPI          TelegramAPI
 	updatesHandler  UpdatesHandler
 }
 
@@ -52,6 +54,7 @@ func New(
 				cfg.Conditions...,
 			),
 		),
+		shutdownChannel: make(chan any, 1),
 	}
 
 	return b
@@ -94,7 +97,7 @@ func (b *Bot) GetUpdates(
 
 			updates, err := FetchUpdates(tgAPI, config)
 			if err != nil {
-				time.Sleep(time.Second * 3)
+				time.Sleep(WaitAfterErr)
 
 				continue
 			}
@@ -130,7 +133,7 @@ func FetchUpdates(tgAPI TelegramFetcher, config tgbotapi.UpdateConfig) ([]model.
 func authorizeBot(
 	token string,
 	debug bool,
-) (BotAPI, error) {
+) (TelegramAPI, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, fmt.Errorf("new bot: %w", err)

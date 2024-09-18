@@ -52,12 +52,13 @@ func (config BusinessMessageConfig) Params() (tgbotapi.Params, error) {
 	return params, nil
 }
 
+//nolint:revive
 func (config BusinessMessageConfig) Method() string {
 	return "sendMessage"
 }
 
 // Helper functions to simplify repetitive parameter addition and error handling.
-func addFirstValidParam(params tgbotapi.Params, key string, values ...interface{}) error {
+func addFirstValidParam(params tgbotapi.Params, key string, values ...any) error {
 	err := params.AddFirstValid(key, values...)
 	if err != nil {
 		return fmt.Errorf("failed to add parameter %s: %w", key, err)
@@ -66,7 +67,7 @@ func addFirstValidParam(params tgbotapi.Params, key string, values ...interface{
 	return nil
 }
 
-func addInterfaceParam(params tgbotapi.Params, key string, value interface{}) error {
+func addInterfaceParam(params tgbotapi.Params, key string, value any) error {
 	err := params.AddInterface(key, value)
 	if err != nil {
 		return fmt.Errorf("failed to add interface parameter %s: %w", key, err)
