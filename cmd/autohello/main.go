@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/iooojik/tg-auto-response/internal/bot"
@@ -38,13 +39,13 @@ func runBot(cfg string) error {
 
 	b := bot.New(conf.BotConfig, logger)
 
-	logger.Info("bot", "starting")
+	logger.Info("starting", "bot_login", strings.Split(conf.BotConfig.Token, ":")[0])
 
 	if err = b.Run(ctx); err != nil {
 		return fmt.Errorf("failed to run bot: %w", err)
 	}
 
-	logger.Info("bot", "stopped")
+	logger.Info("stopped", "bot_login", strings.Split(conf.BotConfig.Token, ":")[0])
 
 	return nil
 }

@@ -56,7 +56,7 @@ func (config BusinessMessageConfig) Method() string {
 	return "sendMessage"
 }
 
-// Helper functions to simplify repetitive parameter addition and error handling
+// Helper functions to simplify repetitive parameter addition and error handling.
 func addFirstValidParam(params tgbotapi.Params, key string, values ...interface{}) error {
 	err := params.AddFirstValid(key, values...)
 	if err != nil {
