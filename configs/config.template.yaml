@@ -1,7 +1,7 @@
 bot:
   token: ""
   debug: true
-  handle:
+  conditions:
     - reply: "Привет 👋 \n\\-\\-\n _отправлено через бота @super\\_puper\\_stas\\_bot_"
       income_messages:
         - привет

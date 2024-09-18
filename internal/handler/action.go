@@ -1,4 +1,4 @@
-package bot
+package handler
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/iooojik/tg-auto-response/internal/model"
 )
 
 var (
@@ -14,9 +15,9 @@ var (
 )
 
 func CheckMessage(
-	message *BusinessMessage,
-	cfg HandleCfg,
-) (*BusinessMessageConfig, error) {
+	message *model.BusinessMessage,
+	cfg model.Condition,
+) (*model.BusinessMessageConfig, error) {
 	if len(cfg.IncomeMessages) == 0 || cfg.Reply == "" {
 		return nil, errors.New("configuration is nil")
 	}
@@ -28,7 +29,7 @@ func CheckMessage(
 			continue
 		}
 
-		msg := &BusinessMessageConfig{
+		msg := &model.BusinessMessageConfig{
 			BaseChat: tgbotapi.BaseChat{
 				ChatID:           message.Chat.ID,
 				ReplyToMessageID: 0,

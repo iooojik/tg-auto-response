@@ -1,4 +1,4 @@
-module github.com/iooojik/tg-auto-hello
+module github.com/iooojik/tg-auto-response
 
 go 1.23
 
