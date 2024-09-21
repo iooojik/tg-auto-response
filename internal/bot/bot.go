@@ -1,98 +1,93 @@
 package bot
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/iooojik/tg-auto-response/internal/handler"
+	"github.com/iooojik/tg-auto-response/internal/model"
+)
+
+const (
+	ReceiveMessagesTimeout = 5
+
+	WaitAfterErr = time.Second * 3
+
+	UpdateBuffSize = 1
+)
+
+type (
+	UpdatesHandler func(updates *chan model.Update) error
 )
 
 type Bot struct {
-	cfg *Config
 	// chat id - command
 	chatContext     map[int64]string
-	Buffer          int
 	shutdownChannel chan any
-	botAPI          *tgbotapi.BotAPI
+	botAPI          TelegramAPI
+	updatesHandler  UpdatesHandler
 }
 
+// New Creates a new Bot instance.
 func New(
 	cfg *Config,
+	logger Logger,
 ) *Bot {
+	bot, err := authorizeBot(cfg.Token, cfg.Debug)
+	if err != nil {
+		panic(fmt.Errorf("authorize bot: %w", err))
+	}
+
 	b := &Bot{
-		cfg:         cfg,
 		chatContext: map[int64]string{},
-		Buffer:      1,
+		botAPI:      bot,
+		updatesHandler: handleUpdates(
+			logger,
+			handler.DebugMessage(logger, cfg.Debug),
+			handler.CheckIgnore(cfg.IgnoreMessagesFrom),
+			handler.HandleBusinessMessage(
+				handler.SendResponse(bot),
+				cfg.Conditions...,
+			),
+		),
+		shutdownChannel: make(chan any, 1),
 	}
 
 	return b
 }
 
-func (b *Bot) Run() error {
-	bot, err := tgbotapi.NewBotAPI(b.cfg.Token)
-	if err != nil {
-		return fmt.Errorf("new bot: %w", err)
-	}
-
-	b.botAPI = bot
-	b.botAPI.Debug = b.cfg.Debug
-
-	slog.Info(fmt.Sprintf("Authorized on account %s", bot.Self.UserName))
-
+func (b *Bot) Run(
+	ctx context.Context,
+) error {
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 5
+	u.Timeout = ReceiveMessagesTimeout
 
-	updates := b.GetUpdatesChan(u)
+	updates := b.GetUpdates(ctx, b.botAPI, u)
 
-	for update := range updates {
-		var (
-			msg *BusinessMessageConfig
-			err error
-		)
-
-		if update.BusinessMessage != nil {
-			if b.isIgnore(update.BusinessMessage.From.ID) {
-				continue
-			}
-
-			msg, err = b.handleBusinessMessage(update.BusinessMessage)
-		} else {
-			continue
-		}
-
-		if err != nil {
-			slog.Error("handle", "err", err.Error())
-			continue
-		}
-
-		if msg == nil {
-			continue
-		}
-
-		params, err := msg.params()
-		if err != nil {
-			slog.Error("params", "err", err.Error())
-			continue
-		}
-
-		_, err = bot.MakeRequest(msg.method(), params)
-		if err != nil {
-			slog.Error("send", "err", err.Error())
-		}
+	err := b.updatesHandler(&updates)
+	if err != nil {
+		return fmt.Errorf("handle updates: %w", err)
 	}
 
 	return nil
 }
 
-// GetUpdatesChan starts and returns a channel for getting updates.
-func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
-	ch := make(chan Update, b.Buffer)
+// GetUpdates starts and returns a channel for getting updates.
+func (b *Bot) GetUpdates(
+	ctx context.Context,
+	tgAPI TelegramFetcher,
+	config tgbotapi.UpdateConfig,
+) chan model.Update {
+	ch := make(chan model.Update, UpdateBuffSize)
 
-	go func() {
+	go func(ctx context.Context) {
 		for {
 			select {
+			case <-ctx.Done():
 			case <-b.shutdownChannel:
 				close(ch)
 				return
@@ -100,10 +95,9 @@ func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
 			default:
 			}
 
-			updates, err := b.GetUpdates(config)
+			updates, err := FetchUpdates(tgAPI, config)
 			if err != nil {
-				slog.Error("updates", "err", err.Error())
-				time.Sleep(time.Second * 3)
+				time.Sleep(WaitAfterErr)
 
 				continue
 			}
@@ -115,50 +109,63 @@ func (b *Bot) GetUpdatesChan(config tgbotapi.UpdateConfig) chan Update {
 				}
 			}
 		}
-	}()
+	}(ctx)
 
 	return ch
 }
 
-func (b *Bot) isIgnore(userID int64) bool {
-	for _, v := range b.cfg.IgnoreMessagesFrom {
-		if v == userID {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (b *Bot) GetUpdates(config tgbotapi.UpdateConfig) ([]Update, error) {
-	resp, err := b.botAPI.Request(config)
+func FetchUpdates(tgAPI TelegramFetcher, config tgbotapi.UpdateConfig) ([]model.Update, error) {
+	resp, err := tgAPI.Request(config)
 	if err != nil {
-		return []Update{}, err
+		return make([]model.Update, 0), fmt.Errorf("fetch updates: %w", err)
 	}
 
-	var updates []Update
-	err = json.Unmarshal(resp.Result, &updates)
+	var updates []model.Update
 
-	return updates, err
+	err = json.Unmarshal(resp.Result, &updates)
+	if err != nil {
+		return make([]model.Update, 0), fmt.Errorf("unmarshal updates: %w", err)
+	}
+
+	return updates, nil
 }
 
-func (b *Bot) handleBusinessMessage(
-	message *BusinessMessage,
-) (*BusinessMessageConfig, error) {
-	if b.cfg.Debug {
-		slog.Info("msg", "chat_ID", message.From.ID, "username", message.From.UserName, "msg", message.Text)
+func authorizeBot(
+	token string,
+	debug bool,
+) (TelegramAPI, error) {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return nil, fmt.Errorf("new bot: %w", err)
 	}
 
-	for _, handleCfg := range b.cfg.Handle {
-		msg, err := CheckMessage(message, handleCfg)
-		if err != nil {
-			slog.Error("action", "err", err.Error())
+	bot.Debug = debug
+
+	return bot, nil
+}
+
+func handleUpdates(
+	l Logger,
+	handlers ...handler.Handler,
+) UpdatesHandler {
+	return func(updates *chan model.Update) error {
+		for update := range *updates {
+			if update.BusinessMessage == nil {
+				continue
+			}
+
+			for _, h := range handlers {
+				err := h(update)
+				if err != nil {
+					l.Error("handle", "msg", err.Error())
+				}
+
+				if errors.Is(err, handler.ErrIgnore) {
+					break
+				}
+			}
 		}
 
-		if msg != nil {
-			return msg, nil
-		}
+		return nil
 	}
-
-	return nil, nil
 }

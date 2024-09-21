@@ -1,12 +1,12 @@
-package bot
+package handler
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 	"unicode"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/iooojik/tg-auto-response/internal/model"
 )
 
 var (
@@ -14,28 +14,33 @@ var (
 )
 
 func CheckMessage(
-	message *BusinessMessage,
-	cfg HandleCfg,
-) (*BusinessMessageConfig, error) {
-	if len(cfg.IncomeMessages) == 0 || cfg.Reply == "" {
-		return nil, errors.New("configuration is nil")
+	message *model.BusinessMessage,
+	condition model.Condition,
+) (*model.BusinessMessageConfig, error) {
+	if len(condition.IncomeMessages) == 0 || condition.Reply == "" {
+		return nil, ErrNoCondition
 	}
 
-	content := sanitizeMessageText(message.Text)
+	if message == nil {
+		return nil, ErrNoMessage
+	}
 
-	for _, hello := range cfg.IncomeMessages {
-		if !strings.EqualFold(hello, content) {
+	content := sanitizeMessage(message.Text)
+
+	for _, incomeMessage := range condition.IncomeMessages {
+		if !strings.EqualFold(incomeMessage, content) {
 			continue
 		}
 
-		msg := &BusinessMessageConfig{
+		//nolint:exhaustruct
+		msg := &model.BusinessMessageConfig{
 			BaseChat: tgbotapi.BaseChat{
 				ChatID:           message.Chat.ID,
 				ReplyToMessageID: 0,
 			},
 			MessageConfig: tgbotapi.MessageConfig{
-				Text:                  cfg.Reply,
-				ParseMode:             "MarkdownV2",
+				Text:                  condition.Reply,
+				ParseMode:             tgbotapi.ModeMarkdownV2,
 				DisableWebPagePreview: true,
 			},
 			BusinessConnectionID: message.BusinessConnectionID,
@@ -44,10 +49,11 @@ func CheckMessage(
 		return msg, nil
 	}
 
+	//nolint:nilnil
 	return nil, nil
 }
 
-func sanitizeMessageText(s string) string {
+func sanitizeMessage(s string) string {
 	var result []rune
 
 	for _, char := range s {
