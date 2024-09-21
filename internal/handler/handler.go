@@ -15,7 +15,7 @@ type (
 
 func CheckIgnore(from model.IgnoreFrom) Handler {
 	return func(upd model.Update) error {
-		message := upd.Message
+		message := upd.BusinessMessage
 
 		if from.Contains(message.From.ID) {
 			return fmt.Errorf("%w: %v", ErrIgnore, message.From.ID)
@@ -27,7 +27,7 @@ func CheckIgnore(from model.IgnoreFrom) Handler {
 
 func DebugMessage(l Logger, debug bool) Handler {
 	return func(upd model.Update) error {
-		msg := upd.Message
+		msg := upd.BusinessMessage
 
 		if !debug || l == nil {
 			return nil

@@ -30,7 +30,7 @@ func TestCheckIgnore(t *testing.T) {
 					123456,
 				},
 				upd: model.Update{
-					Update: tgbotapi.Update{
+					BusinessMessage: &model.BusinessMessage{
 						Message: &tgbotapi.Message{
 							From: &tgbotapi.User{ID: 9999},
 						},
@@ -46,7 +46,7 @@ func TestCheckIgnore(t *testing.T) {
 					123456,
 				},
 				upd: model.Update{
-					Update: tgbotapi.Update{
+					BusinessMessage: &model.BusinessMessage{
 						Message: &tgbotapi.Message{
 							From: &tgbotapi.User{ID: 123456},
 						},
