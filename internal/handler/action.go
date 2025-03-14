@@ -17,7 +17,7 @@ func CheckMessage(
 	message *model.BusinessMessage,
 	condition model.Condition,
 ) (*model.BusinessMessageConfig, error) {
-	if len(condition.IncomeMessages) == 0 || condition.Reply == "" {
+	if len(condition.IncomeMessages) == 0 {
 		return nil, ErrNoCondition
 	}
 
@@ -39,8 +39,8 @@ func CheckMessage(
 				ReplyToMessageID: 0,
 			},
 			MessageConfig: tgbotapi.MessageConfig{
-				Text:                  condition.Reply,
-				ParseMode:             tgbotapi.ModeMarkdownV2,
+				Text:                  "",
+				ParseMode:             tgbotapi.ModeHTML,
 				DisableWebPagePreview: true,
 			},
 			BusinessConnectionID: message.BusinessConnectionID,

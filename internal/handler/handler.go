@@ -1,23 +1,25 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/iooojik/tg-auto-response/internal/model"
 )
 
 type (
-	Decision func(msg *model.BusinessMessageConfig) error
+	Decision func(ctx context.Context, msg *model.BusinessMessageConfig) error
 
-	Handler func(upd model.Update) error
+	Handler func(ctx context.Context, upd model.Update) error
 )
 
 func CheckIgnore(from model.IgnoreFrom) Handler {
-	return func(upd model.Update) error {
+	return func(_ context.Context, upd model.Update) error {
 		message := upd.BusinessMessage
 
-		if from.Contains(message.From.ID) {
+		if len(from) > 0 && from.Contains(message.From.ID) {
 			return fmt.Errorf("%w: %v", ErrIgnore, message.From.ID)
 		}
 
@@ -26,7 +28,7 @@ func CheckIgnore(from model.IgnoreFrom) Handler {
 }
 
 func DebugMessage(l Logger, debug bool) Handler {
-	return func(upd model.Update) error {
+	return func(_ context.Context, upd model.Update) error {
 		msg := upd.BusinessMessage
 
 		if !debug || l == nil {
@@ -41,33 +43,52 @@ func DebugMessage(l Logger, debug bool) Handler {
 
 func HandleBusinessMessage(
 	decision Decision,
+	cl OpenAPIClient,
 	conditions ...model.Condition,
 ) Handler {
-	return func(upd model.Update) error {
-		for _, condition := range conditions {
-			msg, err := CheckMessage(upd.BusinessMessage, condition)
-			if err != nil {
-				return fmt.Errorf("%w. condition reply from config: %v", err, condition.Reply)
-			}
+	return func(ctx context.Context, upd model.Update) error {
+		// for _, condition := range conditions {
+		// msg, err := CheckMessage(upd.BusinessMessage, condition)
+		// if err != nil {
+		// 	return fmt.Errorf("check message: %w", err)
+		// }
+		//
+		// if msg == nil {
+		// 	continue
+		// }
 
-			if msg == nil {
-				continue
-			}
+		resp, err := cl.GenerateResponse(ctx, upd.BusinessMessage.Text)
+		if err != nil {
+			return fmt.Errorf("generate response: %w", err)
+		}
 
-			err = decision(msg)
-			if err != nil {
-				return fmt.Errorf("decision: %w", err)
-			}
+		msg := &model.BusinessMessageConfig{
+			BaseChat: tgbotapi.BaseChat{
+				ChatID:           upd.BusinessMessage.Chat.ID,
+				ReplyToMessageID: 0,
+			},
+			MessageConfig: tgbotapi.MessageConfig{
+				Text:                  resp,
+				ParseMode:             tgbotapi.ModeHTML,
+				DisableWebPagePreview: true,
+			},
+			BusinessConnectionID: upd.BusinessMessage.BusinessConnectionID,
+		}
 
-			return nil
+		err = decision(ctx, msg)
+		if err != nil {
+			return fmt.Errorf("decision: %w", err)
 		}
 
 		return nil
+		// }
+
+		// return nil
 	}
 }
 
 func SendResponse(b TelegramBotFetcher) Decision {
-	return func(msg *model.BusinessMessageConfig) error {
+	return func(ctx context.Context, msg *model.BusinessMessageConfig) error {
 		params, err := msg.Params()
 		if err != nil {
 			return fmt.Errorf("params %w: %v", err, msg)

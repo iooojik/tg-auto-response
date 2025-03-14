@@ -63,7 +63,7 @@ func TestCheckIgnore(t *testing.T) {
 
 			gotFunc := handler.CheckIgnore(tt.args.from)
 
-			err := gotFunc(tt.args.upd)
+			err := gotFunc(t.Context(), tt.args.upd)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("CheckIgnore() error = %v, wantErr %v", err, tt.wantErr)
 			}

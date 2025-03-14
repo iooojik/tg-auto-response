@@ -10,6 +10,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/iooojik/tg-auto-response/internal/handler"
 	"github.com/iooojik/tg-auto-response/internal/model"
+	"github.com/iooojik/tg-auto-response/pkg/openai"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 )
 
 type (
-	UpdatesHandler func(updates *chan model.Update) error
+	UpdatesHandler func(ctx context.Context, updates *chan model.Update) error
 )
 
 type Bot struct {
@@ -42,6 +43,8 @@ func New(
 		panic(fmt.Errorf("authorize bot: %w", err))
 	}
 
+	cl := openai.New(cfg.OpenAI)
+
 	b := &Bot{
 		chatContext: map[int64]string{},
 		botAPI:      bot,
@@ -51,6 +54,7 @@ func New(
 			handler.CheckIgnore(cfg.IgnoreMessagesFrom),
 			handler.HandleBusinessMessage(
 				handler.SendResponse(bot),
+				cl,
 				cfg.Conditions...,
 			),
 		),
@@ -60,15 +64,13 @@ func New(
 	return b
 }
 
-func (b *Bot) Run(
-	ctx context.Context,
-) error {
+func (b *Bot) Run(ctx context.Context) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = ReceiveMessagesTimeout
 
-	updates := b.GetUpdates(ctx, b.botAPI, u)
+	updates := b.FetchUpdates(ctx, b.botAPI, u)
 
-	err := b.updatesHandler(&updates)
+	err := b.updatesHandler(ctx, &updates)
 	if err != nil {
 		return fmt.Errorf("handle updates: %w", err)
 	}
@@ -76,8 +78,8 @@ func (b *Bot) Run(
 	return nil
 }
 
-// GetUpdates starts and returns a channel for getting updates.
-func (b *Bot) GetUpdates(
+// FetchUpdates starts and returns a channel for getting updates.
+func (b *Bot) FetchUpdates(
 	ctx context.Context,
 	tgAPI TelegramFetcher,
 	config tgbotapi.UpdateConfig,
@@ -148,14 +150,14 @@ func handleUpdates(
 	l Logger,
 	handlers ...handler.Handler,
 ) UpdatesHandler {
-	return func(updates *chan model.Update) error {
+	return func(ctx context.Context, updates *chan model.Update) error {
 		for update := range *updates {
 			if update.BusinessMessage == nil {
 				continue
 			}
 
 			for _, h := range handlers {
-				err := h(update)
+				err := h(ctx, update)
 				if err != nil {
 					l.Error("handle", "msg", err.Error())
 				}
